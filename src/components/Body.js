@@ -283,7 +283,7 @@ export default function EnhancedTable() {
       }
     ))
     async function postData() {
-      const response = await axios.post("http://127.0.0.1:8000/backend/func1", {'body': 
+      const response = await axios.post("http://35.238.0.24/backend/func1", {'body': 
         sentPatients
       })
       console.log(sentPatients)
