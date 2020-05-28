@@ -22,9 +22,25 @@ import Switch from '@material-ui/core/Switch';
 import SendIcon from '@material-ui/icons/Send';
 import FilterListIcon from '@material-ui/icons/FilterList';
 
-function createData(ssn, name, email, paid, classId) {
-  return { ssn, name, email, paid, classId };
+function createData(name, calories, fat, carbs, protein) {
+  return { name, calories, fat, carbs, protein };
 }
+
+const rows = [
+    createData('Kimberly Boler', '4176191261', 'kimboler58@icloud.com', 'yes', 33124858),
+    createData('Bethany Brumbaugh', '4178388048', 'brumbaughbethany@gmail.com', 'yes', 33040839),
+    createData('Jennifer Chambers', '7196391840', 'jennifer.chambers99@yahoo.com', 'yes', 33124857),
+    createData('Michael Arnold', '+16368750489', '1990michaelarnold@gmail.com', 'yes', 33124857),
+    createData('Lori Barber', '6366999044', 'lilsuki4406@gmail.com', 'yes', 33040673),
+    createData('Keith Burns', '5738729687', 'usa@keithjburns.com', 'yes', 33040838),
+    createData('Samantha Trendley', '6363288479', 'paige.ivy2014@gmail.com', 'yes', 33055166),
+    createData('Justin Tomicich', '6363467826', 'jtomicich2711@gmail.com', 'yes', 34133072),
+    createData('James (jim) G.', '3143749166', 'toy_master6@yahoo.com', 'yes', 33040672),
+    createData('Solomon Bennett', '3144822962', 'solomonbennett32293@yahoo.com', 'yes', 33040672),
+    createData('Meghan Taylor', '5733053985', 'meghan.taylor2015@gmail.com', 'yes', 32680092),
+    createData('Roy Bedwell', '5737764662', 'rdbedwell@windstream.net', 'yes', 33040837),
+    createData('James (jim) Gallagher', '3143749166', 'toy_master6@yahoo.com', 'yes', 33040837)
+];
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -53,11 +69,11 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  { id: 'ssn', numeric: false, disablePadding: true, label: 'Social Security Number' },
-  { id: 'name', numeric: true, disablePadding: false, label: 'Name' },
-  { id: 'email', numeric: true, disablePadding: false, label: 'Email' },
-  { id: 'paid', numeric: true, disablePadding: false, label: 'Paid' },
-  { id: 'classId', numeric: true, disablePadding: false, label: 'Class Time' },
+  { id: 'name', numeric: false, disablePadding: true, label: 'Name' },
+  { id: 'calories', numeric: true, disablePadding: false, label: 'Phone' },
+  { id: 'fat', numeric: true, disablePadding: false, label: 'Email' },
+  { id: 'carbs', numeric: true, disablePadding: false, label: 'Paid' },
+  { id: 'protein', numeric: true, disablePadding: false, label: 'Class ID' },
 ];
 
 function EnhancedTableHead(props) {
@@ -135,9 +151,7 @@ const useToolbarStyles = makeStyles((theme) => ({
 
 const EnhancedTableToolbar = (props) => {
   const classes = useToolbarStyles();
-  // const { props } = props;
-  const numSelected = props.nSelected.length
-  const sendMail = props.sendMail
+  const { numSelected } = props;
 
   return (
     <Toolbar
@@ -157,7 +171,7 @@ const EnhancedTableToolbar = (props) => {
 
       {numSelected > 0 ? (
         <Tooltip title="Send">
-          <IconButton aria-label="send" onClick={sendMail}>
+          <IconButton aria-label="send">
             <SendIcon />
           </IconButton>
         </Tooltip>
@@ -203,24 +217,20 @@ const useStyles = makeStyles((theme) => ({
 export default function EnhancedTable() {
   const classes = useStyles();
   const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('name');
+  const [orderBy, setOrderBy] = useState('calories');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [patients, setPatients] = useState([]);
-  const [classTime, setClassTime] = useState()
+  const [patients, setPatients] = useState([])
   
-  const browserDate = new Date().toJSON().slice(0,10).replace(/-/g,'/');
-  useEffect(() => {
-    async function fetchData() {
-      const response = await axios("http://35.238.0.24/backend/query")
-      let uniqueTimes = [... new Set(response.data.map(item => item.datetime))]
-      setClassTime(uniqueTimes)
-      setPatients(response.data.map(item => createData(item.ssn, item.firstName + ' ' + item.lastName, item.email, item.paid, item.datetime)))
-    }
-    fetchData()
-  }, [])
+  useEffect(async () => {
+      const response = await axios(
+        "http://127.0.0.1:8000/backend/query"
+      )
+      setPatients(response.data)
+      console.log(patients)
+  })
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -230,7 +240,7 @@ export default function EnhancedTable() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = patients.map((n) => n.ssn);
+      const newSelecteds = rows.map((n) => n.name);
       setSelected(newSelecteds);
       return;
     }
@@ -272,33 +282,12 @@ export default function EnhancedTable() {
 
   const isSelected = (name) => selected.indexOf(name) !== -1;
 
-  const emptyRows = rowsPerPage - Math.min(rowsPerPage, patients.length - page * rowsPerPage);
+  const emptyRows = rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
-  function sendMail(recipients) {
-    const sentPatients = selected.map(item => (
-      {
-        'ssn': item,
-        'name': patients.filter(patient => patient.ssn === item)[0]['name'],
-        'email': patients.filter(patient => patient.ssn === item)[0]['email'],
-      }
-    ))
-    async function postData() {
-      const response = await axios.post("http://127.0.0.1:8000/backend/func1", {'body': 
-        sentPatients
-      })
-      console.log(sentPatients)
-      console.log(response.data)
-      alert(response.data)
-      setSelected([])
-  }
-  postData()
-  }
-
-  // console.log(browserDate)
   return (
     <div className={classes.root}>
       <Paper className={classes.paper}>
-        <EnhancedTableToolbar nSelected={selected} sendMail={sendMail} />
+        <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
           <Table
             className={classes.table}
@@ -313,23 +302,23 @@ export default function EnhancedTable() {
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={patients.length}
+              rowCount={rows.length}
             />
             <TableBody>
-              {stableSort(patients, getComparator(order, orderBy))
+              {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.ssn);
+                  const isItemSelected = isSelected(row.name);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => handleClick(event, row.ssn)}
+                      onClick={(event) => handleClick(event, row.name)}
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={row.ssn}
+                      key={row.name}
                       selected={isItemSelected}
                     >
                       <TableCell padding="checkbox">
@@ -339,12 +328,12 @@ export default function EnhancedTable() {
                         />
                       </TableCell>
                       <TableCell component="th" id={labelId} scope="row" padding="none">
-                        {row.ssn}
+                        {row.name}
                       </TableCell>
-                      <TableCell align="right">{row.name}</TableCell>
-                      <TableCell align="right">{row.email}</TableCell>
-                      <TableCell align="right">{row.paid}</TableCell>
-                      <TableCell align="right">{row.classId}</TableCell>
+                      <TableCell align="right">{row.calories}</TableCell>
+                      <TableCell align="right">{row.fat}</TableCell>
+                      <TableCell align="right">{row.carbs}</TableCell>
+                      <TableCell align="right">{row.protein}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -359,7 +348,7 @@ export default function EnhancedTable() {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={patients.length}
+          count={rows.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onChangePage={handleChangePage}
